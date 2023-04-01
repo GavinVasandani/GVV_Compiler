@@ -12,8 +12,11 @@ class stackAST{
         std::shared_ptr<std::map<std::string, std::vector<variable_state>>> stackMap;
         std::shared_ptr<std::string> curr_func;
         std::shared_ptr<std::map<std::string, std::vector<variable_state>>> structMap;
+        std::shared_ptr<std::map<std::string, int>> stackSizeMap;
     public:
-        stackAST() : stackMap(std::make_shared<std::map<std::string, std::vector<variable_state>>>()), curr_func(std::make_shared<std::string>("")), structMap(std::make_shared<std::map<std::string, std::vector<variable_state>>>()){}
+        stackAST() : stackMap(std::make_shared<std::map<std::string, std::vector<variable_state>>>()), curr_func(std::make_shared<std::string>("")), structMap(std::make_shared<std::map<std::string, std::vector<variable_state>>>()),
+        stackSizeMap(std::make_shared<std::map<std::string, int>>()) //initialize empty map
+        {}
 
         void incVector(std::vector<variable_state>& varList, std::string _name, varType _type, bool _isPntr = false, int array_size = 0){
             //by default isPntr = false
@@ -69,6 +72,7 @@ class stackAST{
         void addBinding(const std::string &func_name, const std::vector<variable_state> &varList){
             if(stackMap->count(func_name) == 0){
                 (*stackMap)[func_name] = varList;
+                (*stackSizeMap)[func_name] = stackPtr; //when doing binding also store func name and stack size in stackSizeMap:
             }
         }
 
@@ -96,7 +100,7 @@ class stackAST{
         int calcStack(const std::string& func_name){ //outputs size of stack allocate for a function
             const std::vector<variable_state>& varList = (*stackMap)[func_name];
             if (varList.size()){
-                return varList[varList.size()-1].getStackMemAddr(); - varList[0].getStackMemAddr();
+                return (*stackSizeMap)[func_name]; //returns stackSize for specific func.
             }
             return 0;
         }
