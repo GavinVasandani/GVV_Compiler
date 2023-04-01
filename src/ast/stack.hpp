@@ -12,12 +12,15 @@ class stackAST{
         std::shared_ptr<std::map<std::string, std::vector<std::vector<variable_state>>>> stackMap;
         std::shared_ptr<std::string> curr_func;
         std::shared_ptr<std::map<std::string, std::vector<variable_state>>> structMap;
+        std::shared_ptr<std::map<std::string, int>> stackSizeMap;
     public:
     //so we've intiailized an empty vector of integer vectors
     //so we're intiializing a map, making it a shared pntr, and assigning this pntr to stackMap member variable pntr
         stackAST() : stackMap(std::make_shared<std::map<std::string, std::vector<std::vector<variable_state>>>>()),
         curr_func(std::make_shared<std::string>("")),
-        structMap(std::make_shared<std::map<std::string, std::vector<variable_state>>>()){}
+        structMap(std::make_shared<std::map<std::string, std::vector<variable_state>>>()),
+        stackSizeMap(std::make_shared<std::map<std::string, int>>()) //initialize empty map
+        {}
 
     //This function only checks if variable already exists in current vector
         void incVector(std::vector<variable_state>& varList, std::string _name, varType _type, bool _isPntr = false, int array_size = 0){
@@ -80,6 +83,8 @@ class stackAST{
         void addBinding(const std::string& func_name, const std::vector<std::vector<variable_state>>& scopesVarList){
             if(stackMap->count(func_name) == 0){ //so func isn't in mapping
                 (*stackMap)[func_name] = scopesVarList;
+                (*stackSizeMap)[func_name] = stackPtr; //when doing binding also store func name and stack size in stackSizeMap:
+                //as key-value pair doesnt exist, then statement above creates key-value pair.
             }
         }
 
@@ -121,17 +126,7 @@ class stackAST{
         int calcStack(const std::string& func_name){ //outputs size of stack allocate for a function
             auto scopedVarList = (*stackMap)[func_name];
             if (scopedVarList.size()){ //non empty scopedVarList
-                //to get last varList:
-                //auto lastVarList = scopedVarList.back(); //output is pass by ref of last element of scopedVarList vector
-                //auto firstVarList = scopedVarList.front();
-
-                //lastVarList[lastVarList.size] or scopedVarList.back().back() is last element of last vector of scopedVarList
-                //last vector's 1st element is 1st variable addr
-                //last vector's last element is last variable addr
-                const auto lastVar = scopedVarList.back().back(); //don't want to allow modification so make const
-                const auto firstVar = scopedVarList.front().front();
-
-                return lastVar.getStackMemAddr() - firstVar.getStackMemAddr();
+                return (*stackSizeMap)[func_name]; //returns stackSize for specific func.
             }
             return 0;
         }
