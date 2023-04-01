@@ -330,7 +330,7 @@ class func_def : public decl_node {
         dst<<"addi sp, sp, "<<-x<<std::endl;
         // dst<<"sw ra, "<<x-4<<"(sp)"<<std::endl; // do i uncomment this?
         //default scope_index value is 0, so checks for tempStackMem in all scopes, correct but not efficient:
-        dst<<"sw ra, "<<Map.lookUpVarStackAddr(get_name(), "tempStackMem")-4<<"(sp)"<<std::endl; //error, need to look in correct scope stack
+        dst<<"sw ra, "<<Map.lookUpVarStackAddr(get_name(), "tempStackMem", 0)-4<<"(sp)"<<std::endl; //error, need to look in correct scope stack
         //store all args first in regs
         store_flag = true;
         if(get_param()!=NULL) {get_param()->riscv(dst, reg_ctxt, freg_ctxt, Map, store_flag, 0, 0, noResetRegs);}

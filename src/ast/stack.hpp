@@ -175,27 +175,29 @@ class stackAST{
         //LookUpVar given index of varList to look for
         //by default we look at global function scope so thats scope_index = 0
         std::vector<variable_state>::iterator lookUpVar(const std::string& func_name, const std::string& var_name, int scope_index=0) {
-            int scope_ind = sizeOfScopeVarList(func_name)-1;
-            scope_index = scope_ind;
-            //Need to modify func so that if it can't find variable in current varList it repeats but iterates scope_index downwards.
-            if(scope_index < 0) {
+        
+            int max_scope = sizeOfScopeVarList(func_name)-1;
+            int scope_ind = scope_index;
+
+            if(scope_ind > max_scope) { //exceeded number of scopes in function so throw error:
                 throw("variable called for is not in variable table");
                 return std::vector<variable_state>::iterator();
             }
-            //else
 
             auto it_Func = findFuncName(func_name); //iterator to func_name key
-            auto varList = (it_Func->second)[scope_index]; //varList of that corresponding func at iterator it and at scope_index
+            auto varList = (it_Func->second)[scope_ind]; //varList of that corresponding func at iterator it and at scope_index
             //Looking for var_name in varList
+
+            if(varList.empty()) { return lookUpVar(func_name, var_name, ++scope_ind); } //if list is empty
 
             auto compareName = [var_name] (variable_state a) { return var_name==a.getName(); }; //outputs true if a reg_state has same variable name as varName
             auto it_Var = find_if(varList.begin(), varList.end(), compareName); //iterator to variable
-            if(it_Var==varList.end()) {
+            if(it_Var==varList.end()) { //so not in current varList then check next/larger local scope: scope_index++
                 //so variable is not in varList, so repeat for lower scope index:
-                return lookUpVar(func_name, var_name, scope_index-1);
+                return lookUpVar(func_name, var_name, ++scope_ind);
             }
             return it_Var; //not sure if it will still return vars.end(), if so then have to do lots of checks
-        }
+        }     
 
         varType lookUpVarType(const std::string& func_name, const std::string& var_name, int scope_index=0) {
             auto it = lookUpVar(func_name, var_name, scope_index); //iterator to variable var_name
