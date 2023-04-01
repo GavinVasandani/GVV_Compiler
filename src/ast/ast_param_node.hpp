@@ -40,12 +40,12 @@ class param_node : public node { //outptus list of parameters/arguments for func
                 next_param->print(dst);}; //prints next argument in argument/parameter list} //so only if next_param isn't null it prints, if null then do nothing, so prevents seg fault.
             }
 
-        virtual void stackBuild(stackAST &Map, std::vector<variable_state>& varList){
+        virtual void stackBuild(stackAST &Map, std::vector<variable_state>& vec){
             //As params are all in 1 scope level:
 
-            Map.incVector(varList, name, type->get_kind(), pntr_flag);
+            Map.incVector(vec, name, type->get_kind(), pntr_flag);
 
-            if(next_param!=NULL){ next_param->stackBuild(Map, varList); }
+            if(next_param!=NULL){ next_param->stackBuild(Map, vec); }
         }
 
         //so this loads all integer literal input params into argument registers, not sure what to do for variable literals (might have to load from)
