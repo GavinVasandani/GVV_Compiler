@@ -1,0 +1,97 @@
+%option noyywrap
+
+%{
+// Avoid error "error: `fileno' was not declared in this scope"
+//removed optional -? from D, need to add back to consider negative numbers but removing for some debugging
+extern "C" int fileno(FILE *stream);
+
+#include "c_parser_ast.tab.hpp"
+
+%}
+
+D			[0-9]+(\.[0-9]+)?
+L			[a-zA-Z]|\\
+H			[a-fA-F0-9]
+E			[Ee][+-]?{D}+
+FS			(f|F|l|L)
+IS			(u|U|l|L)*
+
+%%
+"for"			  { return (FOR); }
+"while"			{ return WHILE; }
+"if"			  { return IF; }
+"else"			{ return ELSE; }
+"return"		{ return RETURN; }
+"void"			{ return VOID; }
+"char"			{ return CHAR; }
+"int"			  { return INT; }
+"short"			{ return SHORT; }
+"long"			{ return LONG; }
+"double"		{ return DOUBLE; }
+"case"      { return CASE; }
+"float"			{ return FLOAT; }
+"string"    { return STRING; }
+"switch"    { return SWITCH; }
+"unsigned"  {return UNSIGNED;}
+"sizeof"    {return SIZEOF;}
+"break"     { return BREAK; }
+"default"   { return DEFAULT; }
+"=="        { return IS_EQUAL;}
+"<="        { return LT_EQUAL;}
+">="        { return GT_EQUAL;}
+"&&"        { return LOGICAL_AND;}
+"||"        { return LOGICAL_OR;}
+"++"        { return INCREMENT;}
+"+="        { return INCREMENT_CUSTOM;}
+"--"        { return DECREMENT;}
+">>"        { return RIGHT_BITSHIFT;}
+"struct"    {return STRUCT;}
+
+\;				{ return(';');}
+\,				{ return(',');}
+\+				{ return('+');}
+\-				{ return('-');}
+\*				{ return('*');}
+\/				{ return('/');}
+\=				{ return('=');}
+\=				{ return('=');}
+\?				{ return('?');}
+\:				{ return(':');}
+\!				{ return('!');}
+\>				{ return('>');}
+\<				{ return('<');}
+\&				{ return('&');}
+\|				{ return('|');}
+\^				{ return('^');}
+
+\'({L}|{D})+\'    { yylval.word = new std::string(yytext); return CHAR_ASSIGN; }
+\"({L}|{D})+\"    { yylval.word = new std::string(yytext); return STRING_ASSIGN; }
+
+{L}({L}|{D})*				{ yylval.word=new std::string(yytext); return IDENTIFIER; }
+{D}+"."{D}*({E})?{FS}?[fF] { yylval.word=new std::string(yytext); return FLOAT_LITERAL; }
+{D}*"."{D}+({E})?{FS}? { yylval.word=new std::string(yytext); return DOUBLE_LITERAL; }
+{D}+"."{D}*({E})?{FS}? { yylval.word=new std::string(yytext); return DOUBLE_LITERAL; }
+0[xX]{H}+{IS}?				{ yylval.number=(int)strtol(yytext, NULL, 0); return(NUMBER); } //
+0{D}+{IS}?					{ yylval.number=(int)strtol(yytext, NULL, 0); return(NUMBER); } //
+{D}+{IS}?					{ yylval.number=(int)strtol(yytext, NULL, 0); return(NUMBER); } //
+L?'(\\.|[^\\'])+'			{ yylval.number=(int)strtol(yytext, NULL, 0); return(NUMBER); } //need to fix data types everywhere
+
+\(				{ return ('('); }
+\{				{ return ('{'); }
+\}				{ return ('}'); }
+\[				{ return ('['); }
+\)				{ return (')'); }
+\]				{ return (']'); }
+\n[ \t]*\n  { return EMPTY_LINE; }//might cause issues
+
+[ \t\v\f\n]		{ ; }
+
+.			{ printf("Invalid token\n"); exit(1); }
+
+%%
+
+void yyerror (char const *s)
+{
+  fprintf (stderr, "Lexing error : %s\n", s);
+  exit(1);
+}
