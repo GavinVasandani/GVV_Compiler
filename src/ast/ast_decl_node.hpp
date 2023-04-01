@@ -220,11 +220,14 @@ class func_decl : public decl_node {
         dst<<";"<<std::endl;
     }
 
-    virtual void stackBuild(stackAST &Map, std::vector<variable_state> &vec){
-        vec.clear();
+    virtual void stackBuild(stackAST &Map, std::vector<variable_state> &vecUnused){
+        auto vec = std::vector<std::vector<variable_state>>();
+        auto varList = std::vector<variable_state>();
+        //use overloaded stackBuild func for param, so that it uses same varList
+        if(get_param()!= NULL){ get_param()->stackBuild(Map, varList); } //allocate stack memory for input params
 
-        if(get_param()!= NULL){ get_param()->stackBuild(Map, vec); }
-        Map.addBinding(get_name(), vec);
+        //add this varList to scopeVarList
+        Map.addScopeVarList(vec, varList);
 
         Map.resetStack();
     }
@@ -257,36 +260,49 @@ class func_def : public decl_node {
         func_scope->print(dst);
     }
 
-    virtual void stackBuild(stackAST &Map, std::vector<variable_state> &vec){
-        vec.clear();
-        if(get_param()!= NULL){ get_param()->stackBuild(Map, vec); } //allocate stack memory for input params
+    virtual void stackBuild(stackAST &Map, std::vector<variable_state> &vecUnused){
+        //vec.clear(); //scopesVarList is cleared when new function is defined.
+        //no need for vec.clear just reinitialize a new vector:
+        auto vec = std::vector<std::vector<variable_state>>();
+        //params are all in 1 scope level
+        auto varList = std::vector<variable_state>();
+        //use overloaded stackBuild func for param, so that it uses same varList
 
-        func_scope->stackBuild(Map, vec); //scopeVarList is being filled based on scopes
+        func_scope->stackBuildScopeDef(Map, vec); //scopeVarList is being filled based on scopes
+
+        //add this varList to scopeVarList
+        if(get_param()!= NULL){ get_param()->stackBuild(Map, varList); } //allocate stack memory for input params
+        Map.addScopeVarList(vec, varList); //so input params is last in varList so most global scope
 
         //std::string tempStackMem = makeName("tempStackMem");
+
+        //Add these temporary variables to first varList, so vec[0]
+
+        //we want to put temporary variables in last varList, 1st varList is most local scope.
+
         std::string tempStackMem = "tempStackMem";
-        Map.incVector(vec, tempStackMem, IntType);
+        Map.incVector(vec.back(), tempStackMem, IntType);
 
         std::string rega1 = "rega1";
-        Map.incVector(vec, rega1, IntType);
+        Map.incVector(vec.back(), rega1, IntType);
 
         std::string rega2 = "rega2";
-        Map.incVector(vec, rega2, IntType);
+        Map.incVector(vec.back(), rega2, IntType);
 
         std::string rega3 = "rega3";
-        Map.incVector(vec, rega3, IntType);
+        Map.incVector(vec.back(), rega3, IntType);
 
         std::string rega4 = "rega4";
-        Map.incVector(vec, rega4, IntType);
+        Map.incVector(vec.back(), rega4, IntType);
 
         std::string rega5 = "rega5";
-        Map.incVector(vec, rega5, IntType);
+        Map.incVector(vec.back(), rega5, IntType);
 
         std::string rega6 = "rega6";
-        Map.incVector(vec, rega6, IntType);
+        Map.incVector(vec.back(), rega6, IntType);
 
         std::string rega7 = "rega7";
-        Map.incVector(vec, rega7, IntType);
+        Map.incVector(vec.back(), rega7, IntType);
 
         Map.addBinding(get_name(), vec);
 
@@ -454,7 +470,7 @@ class scope_def : public decl_node {
             }
             dst<<"}"<<std::endl;
         }
-/*
+
         virtual void stackBuildScopeDef(stackAST& Map, std::vector<std::vector<variable_state>>& vec) {
 
             //everytime there's a new scope def we intiailize a new varList:
@@ -471,12 +487,6 @@ class scope_def : public decl_node {
             //at end of scoped def we insert into vec aka scopedVarList
 
             Map.addScopeVarList(vec, varList);
-        }
-*/
-        virtual void stackBuild(stackAST& Map, std::vector<variable_state>& vec) {
-            for (auto ptr : *SubTreeListPtr) { //allocate stack memory for variables in body of func.
-                ptr->stackBuild(Map, vec); //but if ptr is a scoped_statement then as scoped_statement doesn't use stackBuild func then it ignores it
-            }
         }
 
         virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {

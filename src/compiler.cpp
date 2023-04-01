@@ -7,7 +7,7 @@
 
 void compile(std::ostream &w, std::string file)
 {
-    bool printAST = false;
+    bool printAST = true;
 
     std::vector<variable_state> vec;
     stackAST varStack;
