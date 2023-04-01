@@ -13,13 +13,15 @@ class stackAST{
         std::shared_ptr<std::string> curr_func;
         std::shared_ptr<std::map<std::string, std::vector<variable_state>>> structMap;
         std::shared_ptr<std::map<std::string, int>> stackSizeMap;
+        std::shared_ptr<int> scope_ind;
     public:
     //so we've intiailized an empty vector of integer vectors
     //so we're intiializing a map, making it a shared pntr, and assigning this pntr to stackMap member variable pntr
         stackAST() : stackMap(std::make_shared<std::map<std::string, std::vector<std::vector<variable_state>>>>()),
         curr_func(std::make_shared<std::string>("")),
         structMap(std::make_shared<std::map<std::string, std::vector<variable_state>>>()),
-        stackSizeMap(std::make_shared<std::map<std::string, int>>()) //initialize empty map
+        stackSizeMap(std::make_shared<std::map<std::string, int>>()), //initialize empty map
+        scope_ind(std::make_shared<int>(0))
         {}
 
     //This function only checks if variable already exists in current vector
@@ -88,6 +90,11 @@ class stackAST{
             }
         }
 
+        int sizeOfScopeVarList(const std::string& func_name) {
+            auto scopesVarList = (*stackMap)[func_name];
+            return scopesVarList.size(); //this returns number of scopes in function
+        }
+
         void resetStack(){
             stackPtr = 0;
         }
@@ -138,6 +145,15 @@ class stackAST{
         std::string getCurrFunc() const {
             return (*curr_func);
         }
+
+        void setCurrScopeIndex(int scope_index) {
+            *scope_ind = scope_index;
+        }
+
+        int getCurrScopeIndex() const {
+            return (*scope_ind);
+        }
+
         variable_state returnVar(const std::vector<variable_state>& varList, const std::string& _name){
             for(variable_state var : varList){
                 if(var.getName()==_name){
@@ -159,6 +175,14 @@ class stackAST{
         //LookUpVar given index of varList to look for
         //by default we look at global function scope so thats scope_index = 0
         std::vector<variable_state>::iterator lookUpVar(const std::string& func_name, const std::string& var_name, int scope_index=0) {
+            int scope_ind = sizeOfScopeVarList(func_name)-1;
+            scope_index = scope_ind;
+            //Need to modify func so that if it can't find variable in current varList it repeats but iterates scope_index downwards.
+            if(scope_index < 0) {
+                throw("variable called for is not in variable table");
+                return std::vector<variable_state>::iterator();
+            }
+            //else
 
             auto it_Func = findFuncName(func_name); //iterator to func_name key
             auto varList = (it_Func->second)[scope_index]; //varList of that corresponding func at iterator it and at scope_index
@@ -167,39 +191,40 @@ class stackAST{
             auto compareName = [var_name] (variable_state a) { return var_name==a.getName(); }; //outputs true if a reg_state has same variable name as varName
             auto it_Var = find_if(varList.begin(), varList.end(), compareName); //iterator to variable
             if(it_Var==varList.end()) {
-                throw("variable called for is not in variable table");
+                //so variable is not in varList, so repeat for lower scope index:
+                return lookUpVar(func_name, var_name, scope_index-1);
             }
             return it_Var; //not sure if it will still return vars.end(), if so then have to do lots of checks
         }
 
-        varType lookUpVarType(const std::string& func_name, const std::string& var_name) {
-            auto it = lookUpVar(func_name, var_name); //iterator to variable var_name
+        varType lookUpVarType(const std::string& func_name, const std::string& var_name, int scope_index=0) {
+            auto it = lookUpVar(func_name, var_name, scope_index); //iterator to variable var_name
             return it->getType();
         }
 
-        std::string lookUpVarTypePrint(const std::string& func_name, const std::string& var_name) {
-            auto it = lookUpVar(func_name, var_name); //iterator to variable var_name
+        std::string lookUpVarTypePrint(const std::string& func_name, const std::string& var_name, int scope_index=0) {
+            auto it = lookUpVar(func_name, var_name, scope_index); //iterator to variable var_name
             return it->getTypePrint();
         }
 
-        std::string lookUpVarReg(const std::string& func_name, const std::string& var_name) {
-            auto it = lookUpVar(func_name, var_name);
+        std::string lookUpVarReg(const std::string& func_name, const std::string& var_name, int scope_index=0) {
+            auto it = lookUpVar(func_name, var_name, scope_index); //iterator to variable var_name
             return it->getReg();
         }
 
-        int lookUpVarStackAddr(const std::string& func_name, const std::string& var_name) {
-            auto it = lookUpVar(func_name, var_name);
+        int lookUpVarStackAddr(const std::string& func_name, const std::string& var_name, int scope_index=0) {
+            auto it = lookUpVar(func_name, var_name, scope_index); //iterator to variable var_name
             return it->getStackMemAddr();
         }
 
-        bool lookUpVarInStackMem(const std::string& func_name, const std::string& var_name) {
-            auto it = lookUpVar(func_name, var_name);
+        bool lookUpVarInStackMem(const std::string& func_name, const std::string& var_name, int scope_index=0) {
+            auto it = lookUpVar(func_name, var_name, scope_index); //iterator to variable var_name
             return it->getInStackMem();
         }
 
         //set to false for now - add once we start using pntr
-        bool lookUpVarIsPntr(const std::string& func_name, const std::string& var_name) {
-            auto it = lookUpVar(func_name, var_name);
+        bool lookUpVarIsPntr(const std::string& func_name, const std::string& var_name, int scope_index=0) {
+            auto it = lookUpVar(func_name, var_name, scope_index); //iterator to variable var_name
             return it->getIsPntr();
         }
 

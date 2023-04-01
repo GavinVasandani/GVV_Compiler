@@ -71,7 +71,8 @@ class var_decl : public decl_node {
     }
 
     virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {
-
+        
+        int scope_index = Map.getCurrScopeIndex();
         auto func_name = Map.getCurrFunc(); //string storing current func_name
         //Variable declaration for int type:
 
@@ -140,7 +141,7 @@ class var_def : public decl_node {
     }
 
     virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {        //int a; //default consider variable is IntType
-
+        int scope_index = Map.getCurrScopeIndex();
 
         if(get_type()->getTypePrint()=="int") {
 
@@ -315,7 +316,9 @@ class func_def : public decl_node {
     virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {
         int x = Map.calcStack(get_name());
         Map.setCurrFunc(get_name());
-        //int x = 0; // comment this out when running
+
+        //so scope_index initially is number of varLists in func binding so:
+        //set scope_index using Map like setCurrFunc
 
         //function definition: int a (int x) { return x + 2; }, so cpp code below this is the function code, so must start with label and then print rest of body code
         //store return address. //not executing a function call so no need for this.
@@ -326,6 +329,7 @@ class func_def : public decl_node {
         dst<<get_name()<<":"<<std::endl; //func name is used as label
         dst<<"addi sp, sp, "<<-x<<std::endl;
         // dst<<"sw ra, "<<x-4<<"(sp)"<<std::endl; // do i uncomment this?
+        //default scope_index value is 0, so checks for tempStackMem in all scopes, correct but not efficient:
         dst<<"sw ra, "<<Map.lookUpVarStackAddr(get_name(), "tempStackMem")-4<<"(sp)"<<std::endl; //error, need to look in correct scope stack
         //store all args first in regs
         store_flag = true;
@@ -516,7 +520,7 @@ class pntr_decl : public decl_node {
     }
 
     virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {
-
+        int scope_index = Map.getCurrScopeIndex();
         auto func_name = Map.getCurrFunc();
 
         if(get_type()->getTypePrint()=="int") { //intiailizes pointer to 0 and stores in memory.
@@ -564,7 +568,7 @@ class pntr_def : public decl_node {
     }
 
     virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {
-
+        int scope_index = Map.getCurrScopeIndex();
         auto func_name = Map.getCurrFunc();
 
         if(get_value()->get_string_val()=="0") {
