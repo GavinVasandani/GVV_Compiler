@@ -79,7 +79,7 @@ class var_decl : public decl_node {
         if(get_type()->getTypePrint()=="int") {
             reg_ctxt.newVar(get_name(), get_type()->get_kind(), "a0", "a7"); //variable that is assigned to reg has name get_name()
             dst<<"li "<<reg_ctxt.findVarReg(get_name())<<", 0"<<std::endl; //loads default value 0 into register
-            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl;
+            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl;
             reg_ctxt.emptyReg(get_name()); //empties register that was used to store variable.
         }
         else if(get_type()->getTypePrint()=="double") { //load into float register
@@ -92,7 +92,7 @@ class var_decl : public decl_node {
             freg_ctxt.newVar(get_name(), get_type()->get_kind(), "fa0", "fa7");
             dst<<"fmv.d.x "<<freg_ctxt.findVarReg(get_name())<<", "<<reg_ctxt.findVarReg(temp_zeroreg)<<std::endl;
             //Loading this into memory
-            dst<<"fsd "<<freg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-8<<"(sp)"<<std::endl;
+            dst<<"fsd "<<freg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-8<<"(sp)"<<std::endl;
             freg_ctxt.emptyReg(get_name());
             reg_ctxt.emptyReg(temp_zeroreg);
         }
@@ -106,7 +106,7 @@ class var_decl : public decl_node {
             freg_ctxt.newVar(get_name(), get_type()->get_kind(), "fa0", "fa7");
             dst<<"fmv.w.x "<<freg_ctxt.findVarReg(get_name())<<", "<<reg_ctxt.findVarReg(temp_zeroreg)<<std::endl;
             //Loading this into memory
-            dst<<"fsw "<<freg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl;
+            dst<<"fsw "<<freg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl;
             freg_ctxt.emptyReg(get_name());
             reg_ctxt.emptyReg(temp_zeroreg);
         }
@@ -114,7 +114,7 @@ class var_decl : public decl_node {
             reg_ctxt.newVar(get_name(), get_type()->get_kind(), "a0", "a7"); //variable that is assigned to reg has name get_name()
             dst<<"li "<<reg_ctxt.findVarReg(get_name())<<", 0"<<std::endl; //loads default value 0 into register
             auto func_name = Map.getCurrFunc(); //string storing current func_name
-            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl;
+            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl;
             reg_ctxt.emptyReg(get_name()); //empties register that was used to store variable.
         }
     }
@@ -156,7 +156,7 @@ class var_def : public decl_node {
             dst<<"add "<<reg_ctxt.findVarReg(get_name())<<", "<<"zero"<<", "<<reg_ctxt.findVarReg(get_value()->getVarName())<<std::endl;
 
             auto func_name = Map.getCurrFunc(); //string storing current func_name
-            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl;
+            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl;
             reg_ctxt.emptyReg(get_name());
 
         }
@@ -168,7 +168,7 @@ class var_def : public decl_node {
 
             //store in memory
             auto func_name = Map.getCurrFunc();
-            dst<<"fsd "<<freg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-8<<"(sp)"<<std::endl;
+            dst<<"fsd "<<freg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-8<<"(sp)"<<std::endl;
 
             //empty float reg:
             freg_ctxt.emptyReg(get_name());
@@ -181,7 +181,7 @@ class var_def : public decl_node {
 
             //store in memory
             auto func_name = Map.getCurrFunc();
-            dst<<"fsw "<<freg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl;
+            dst<<"fsw "<<freg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl;
 
             //empty float reg:
             freg_ctxt.emptyReg(get_name());
@@ -197,7 +197,7 @@ class var_def : public decl_node {
             dst<<"add "<<reg_ctxt.findVarReg(get_name())<<", "<<"zero"<<", "<<reg_ctxt.findVarReg(get_value()->getVarName())<<std::endl;
 
             auto func_name = Map.getCurrFunc(); //string storing current func_name
-            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl;
+            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl;
             reg_ctxt.emptyReg(get_name());
         }
 
@@ -317,6 +317,8 @@ class func_def : public decl_node {
         int x = Map.calcStack(get_name());
         Map.setCurrFunc(get_name());
 
+        Map.setCurrScopeIndex(Map.sizeOfScopeVarList(get_name())-1); //initially setScopeIndex to most global scope in func
+        int scope_index = Map.getCurrScopeIndex();
         //so scope_index initially is number of varLists in func binding so:
         //set scope_index using Map like setCurrFunc
 
@@ -330,7 +332,7 @@ class func_def : public decl_node {
         dst<<"addi sp, sp, "<<-x<<std::endl;
         // dst<<"sw ra, "<<x-4<<"(sp)"<<std::endl; // do i uncomment this?
         //default scope_index value is 0, so checks for tempStackMem in all scopes, correct but not efficient:
-        dst<<"sw ra, "<<Map.lookUpVarStackAddr(get_name(), "tempStackMem", 0)-4<<"(sp)"<<std::endl; //error, need to look in correct scope stack
+        dst<<"sw ra, "<<Map.lookUpVarStackAddr(get_name(), "tempStackMem", scope_index)-4<<"(sp)"<<std::endl; //error, need to look in correct scope stack
         //store all args first in regs
         store_flag = true;
         if(get_param()!=NULL) {get_param()->riscv(dst, reg_ctxt, freg_ctxt, Map, store_flag, 0, 0, noResetRegs);}
@@ -494,11 +496,17 @@ class scope_def : public decl_node {
         }
 
         virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {
+            //Entering scope so decrement scope index:
+            int scope_index = Map.getCurrScopeIndex();
+            Map.setCurrScopeIndex(--scope_index);
+            
             if(SubTreeListPtr!=NULL) {
                 for (auto ptr : *SubTreeListPtr) { //specifies instructions inside function definition.
                     ptr->riscv(dst, reg_ctxt, freg_ctxt, Map);
                 }
             }
+            //Increment scope_index as we're exiting scope:
+            Map.setCurrScopeIndex(++scope_index);
         }
 };
 
@@ -526,14 +534,14 @@ class pntr_decl : public decl_node {
         if(get_type()->getTypePrint()=="int") { //intiailizes pointer to 0 and stores in memory.
             reg_ctxt.newVar(get_name(), get_type()->get_kind(), "a0", "a7", true); //variable that is assigned to reg has name get_name()
             dst<<"li "<<reg_ctxt.findVarReg(get_name())<<", 0"<<std::endl; //loads default value 0 into register
-            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl;
+            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl;
             reg_ctxt.emptyReg(get_name()); //empties register that was used to store variable.
         }
 
         else if(get_type()->getTypePrint()=="char") {
             reg_ctxt.newVar(get_name(), get_type()->get_kind(), "a0", "a7", true); //variable that is assigned to reg has name get_name()
             dst<<"li "<<reg_ctxt.findVarReg(get_name())<<", 0"<<std::endl; //loads default value 0 into register
-            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl;
+            dst<<"sw "<<reg_ctxt.findVarReg(get_name())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl;
             reg_ctxt.emptyReg(get_name()); //empties register that was used to store variable.
 
         }
@@ -575,7 +583,7 @@ class pntr_def : public decl_node {
             //storing address of x in pointer y:
             get_value()->riscv(dst, reg_ctxt, freg_ctxt, Map);
             //storing &x into stack for int *y and emptying register:
-            dst<<"sw "<<reg_ctxt.findVarReg(get_value()->getVarName())<<", "<<Map.lookUpVarStackAddr(func_name, get_name())-4<<"(sp)"<<std::endl; //maybe modify for chars
+            dst<<"sw "<<reg_ctxt.findVarReg(get_value()->getVarName())<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)-4<<"(sp)"<<std::endl; //maybe modify for chars
             //Empty register:
             reg_ctxt.emptyReg(get_value()->getVarName());
         }
@@ -591,7 +599,7 @@ class pntr_def : public decl_node {
         reg_ctxt.newVar(head, get_type()->get_kind(), "a0", "a7", false);
 
         //loads address of head.
-        dst<<"li "<<reg_ctxt.findVarReg(head)<<", "<<Map.lookUpVarStackAddr(func_name, get_name())<<std::endl;
+        dst<<"li "<<reg_ctxt.findVarReg(head)<<", "<<Map.lookUpVarStackAddr(func_name, get_name(), scope_index)<<std::endl;
 
         dst<<"add "<<reg_ctxt.findVarReg(head)<<", sp, "<<reg_ctxt.findVarReg(head)<<std::endl;
 
