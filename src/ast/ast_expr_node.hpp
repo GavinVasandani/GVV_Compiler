@@ -278,7 +278,9 @@ class expr_incr : public expr_node {
         setVarName() = getLeft()->getVarName();
         //store in memory the updated value
         auto func_name = Map.getCurrFunc();
-        dst<<"sw "<<reg_ctxt.findVarReg(getLeft()->getVarName())<<", "<<Map.lookUpVarStackAddr(func_name, getLeft()->getVarName())-4<<"(sp)"<<std::endl;
+        int scope_index = Map.getCurrScopeIndex();
+        
+        dst<<"sw "<<reg_ctxt.findVarReg(getLeft()->getVarName())<<", "<<Map.lookUpVarStackAddr(func_name, getLeft()->getVarName(), scope_index)-4<<"(sp)"<<std::endl;
     }
 };
 
@@ -377,6 +379,8 @@ class expr_assign : public expr_node {
     }
 
     virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {        //executes instructions for LHS, RHS operands.
+        
+        int scope_index = Map.getCurrScopeIndex();
         //Assuming left is identifier:
         getLeft()->riscv(dst, reg_ctxt, freg_ctxt, Map);
         //Assuming right is constant:
@@ -398,7 +402,7 @@ class expr_assign : public expr_node {
             }
             else { //no deref operation
 
-                dst<<"sw "<<reg_ctxt.findVarReg(getLeft()->getVarName())<<", "<<Map.lookUpVarStackAddr(func_name, getLeft()->getName())-4<<"(sp)"<<std::endl;
+                dst<<"sw "<<reg_ctxt.findVarReg(getLeft()->getVarName())<<", "<<Map.lookUpVarStackAddr(func_name, getLeft()->getName(), scope_index)-4<<"(sp)"<<std::endl;
                 //stores register in stackPtr of LHS variable, doesnt work for dereferencing
 
             }
@@ -820,21 +824,22 @@ class expr_ident : public expr_node {
 
         //Current func_name:
         auto func_name = Map.getCurrFunc();
+        int scope_index = Map.getCurrScopeIndex();
         //Finding free reg:
 
         //expr_ident can also be pntr type so need to check:
-        if(Map.lookUpVarIsPntr(func_name, getName())==true) {
+        if(Map.lookUpVarIsPntr(func_name, getName())==true, scope_index) {
         //output an add specifier or multiple that the expr_add receives and adds accordingly
 
-            if(Map.lookUpVarType(func_name, getName())==IntType) {
+            if(Map.lookUpVarType(func_name, getName(), scope_index)==IntType) {
                 add_specifier = 4;
             }
 
-            if(Map.lookUpVarTypePrint(func_name, getName())=="int") { //so int *pntr; can add for different types double *pntr, char *pntr
+            if(Map.lookUpVarTypePrint(func_name, getName(), scope_index)=="int") { //so int *pntr; can add for different types double *pntr, char *pntr
 
-                reg_ctxt.newVar(getName(), Map.lookUpVarType(func_name, getName()) , "a0", "a7", true); //freeReg found and stored in it variable of name getName()
+                reg_ctxt.newVar(getName(), Map.lookUpVarType(func_name, getName(), scope_index) , "a0", "a7", true); //freeReg found and stored in it variable of name getName()
 
-                dst<<"lw "<<reg_ctxt.findVarReg(getName())<<", "<<Map.lookUpVarStackAddr(func_name, getName())-4<<"(sp)"<<std::endl;
+                dst<<"lw "<<reg_ctxt.findVarReg(getName())<<", "<<Map.lookUpVarStackAddr(func_name, getName(), scope_index)-4<<"(sp)"<<std::endl;
 
                 setVarName() = getName(); //assigns VarName as the identifier name: getName();
 
@@ -845,11 +850,11 @@ class expr_ident : public expr_node {
             //copy int stuff for pntr type and make the rest else if
 
         }
-        else if(Map.lookUpVarTypePrint(func_name, getName())=="int") {
+        else if(Map.lookUpVarTypePrint(func_name, getName(), scope_index)=="int") {
 
-            reg_ctxt.newVar(getName(), Map.lookUpVarType(func_name, getName()) , "a0", "a7"); //freeReg found and stored in it variable of name getName()
+            reg_ctxt.newVar(getName(), Map.lookUpVarType(func_name, getName(), scope_index) , "a0", "a7"); //freeReg found and stored in it variable of name getName()
 
-            dst<<"lw "<<reg_ctxt.findVarReg(getName())<<", "<<Map.lookUpVarStackAddr(func_name, getName())-4<<"(sp)"<<std::endl;
+            dst<<"lw "<<reg_ctxt.findVarReg(getName())<<", "<<Map.lookUpVarStackAddr(func_name, getName(), scope_index)-4<<"(sp)"<<std::endl;
 
             setVarName() = getName(); //assigns VarName as the identifier name: getName();
         }
@@ -864,8 +869,8 @@ class expr_ident : public expr_node {
             setVarName() = getName();
         }
         else {
-            reg_ctxt.newVar(getName(), Map.lookUpVarType(func_name, getName()) , "a0", "a7"); //freeReg found and stored in it variable of name getName()
-            dst<<"lw "<<reg_ctxt.findVarReg(getName())<<", "<<Map.lookUpVarStackAddr(func_name, getName())-4<<"(sp)"<<std::endl;
+            reg_ctxt.newVar(getName(), Map.lookUpVarType(func_name, getName(), scope_index) , "a0", "a7"); //freeReg found and stored in it variable of name getName()
+            dst<<"lw "<<reg_ctxt.findVarReg(getName())<<", "<<Map.lookUpVarStackAddr(func_name, getName(), scope_index)-4<<"(sp)"<<std::endl;
             setVarName() = getName(); //assigns VarName as the identifier name: getName();
         }
     }
