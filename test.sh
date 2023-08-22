@@ -69,3 +69,5 @@ done
 
 printf "\nPassing %d/%d tests\n" "${PASSING}" "${TOTAL}"
 printf '%s\n' '</testsuite>' >> "${J_UNIT_OUTPUT_FILE}"
+
+make clean

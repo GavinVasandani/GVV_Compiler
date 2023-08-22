@@ -55,6 +55,7 @@ class param_node : public node { //outptus list of parameters/arguments for func
     virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map, bool store_flag, int currAReg, int currAFReg, std::vector<std::string>& noResetRegs) { //store params in certain registers
 
         auto func_name = Map.getCurrFunc();
+        int scope_index = Map.getCurrScopeIndex();
 
         if(store_flag==true) { //if function definition then want to store arguments into memory.
 
@@ -64,7 +65,7 @@ class param_node : public node { //outptus list of parameters/arguments for func
                 //Store params immediately in stack and empty used reg:
                 auto func_name = Map.getCurrFunc(); //string storing current func_name
                 auto arg_reg = "a"+std::to_string(currAReg);
-                dst<<"sw "<<arg_reg<<", "<<Map.lookUpVarStackAddr(func_name, name)-4<<"(sp)"<<std::endl;
+                dst<<"sw "<<arg_reg<<", "<<Map.lookUpVarStackAddr(func_name, name, scope_index)-4<<"(sp)"<<std::endl;
                 //dst<<"sw "<<reg_ctxt.findVarReg(name)<<", "<<Map.lookUpVarStackAddr(func_name, name)-4<<"(sp)"<<std::endl;
                 //So traverse through all argument registers and store arguments in memory and empty then, but empty such that we don't use the next available register in the next argument storing.
                 //This is only exception for function parameters
@@ -74,7 +75,7 @@ class param_node : public node { //outptus list of parameters/arguments for func
             else if(type->getTypePrint()=="double") {
                 auto func_name = Map.getCurrFunc(); //string storing current func_name
                 auto arg_reg = "fa"+std::to_string(currAFReg);
-                dst<<"fsd "<<arg_reg<<", "<<Map.lookUpVarStackAddr(func_name, name)-8<<"(sp)"<<std::endl;
+                dst<<"fsd "<<arg_reg<<", "<<Map.lookUpVarStackAddr(func_name, name, scope_index)-8<<"(sp)"<<std::endl;
                 //dst<<"sw "<<reg_ctxt.findVarReg(name)<<", "<<Map.lookUpVarStackAddr(func_name, name)-4<<"(sp)"<<std::endl;
                 //So traverse through all argument registers and store arguments in memory and empty then, but empty such that we don't use the next available register in the next argument storing.
                 //This is only exception for function parameters
@@ -84,7 +85,7 @@ class param_node : public node { //outptus list of parameters/arguments for func
             else if(type->getTypePrint()=="float") {
                 auto func_name = Map.getCurrFunc(); //string storing current func_name
                 auto arg_reg = "fa"+std::to_string(currAFReg);
-                dst<<"fsw "<<arg_reg<<", "<<Map.lookUpVarStackAddr(func_name, name)-4<<"(sp)"<<std::endl;
+                dst<<"fsw "<<arg_reg<<", "<<Map.lookUpVarStackAddr(func_name, name, scope_index)-4<<"(sp)"<<std::endl;
                 //dst<<"sw "<<reg_ctxt.findVarReg(name)<<", "<<Map.lookUpVarStackAddr(func_name, name)-4<<"(sp)"<<std::endl;
                 //So traverse through all argument registers and store arguments in memory and empty then, but empty such that we don't use the next available register in the next argument storing.
                 //This is only exception for function parameters
@@ -102,7 +103,7 @@ class param_node : public node { //outptus list of parameters/arguments for func
                 noResetRegs.push_back(reg_ctxt.findVarReg(expr_param->getVarName()));
             }
             else if(name!="empty") { //so input param must be variables
-                dst<<"lw "<<"a"+std::to_string(currAReg)<<", "<<Map.lookUpVarStackAddr(func_name, name)-4<<"(sp)"<<std::endl;
+                dst<<"lw "<<"a"+std::to_string(currAReg)<<", "<<Map.lookUpVarStackAddr(func_name, name, scope_index)-4<<"(sp)"<<std::endl;
             }
             else { //input param is number
                 dst<<"li "<<"a"+std::to_string(currAReg)<<", "<<val<<std::endl;

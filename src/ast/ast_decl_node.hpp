@@ -496,17 +496,22 @@ class scope_def : public decl_node {
         }
 
         virtual void riscv(std::ostream& dst, register_context& reg_ctxt, fregister_context& freg_ctxt, stackAST &Map) {
+            auto func_name = Map.getCurrFunc();
             //Entering scope so decrement scope index:
             int scope_index = Map.getCurrScopeIndex();
-            Map.setCurrScopeIndex(--scope_index);
+            if( (scope_index-1) >= 0 ) { 
+                Map.setCurrScopeIndex(--scope_index); //only lower scope level if a lower scope level exists
+            } 
             
             if(SubTreeListPtr!=NULL) {
                 for (auto ptr : *SubTreeListPtr) { //specifies instructions inside function definition.
                     ptr->riscv(dst, reg_ctxt, freg_ctxt, Map);
                 }
             }
-            //Increment scope_index as we're exiting scope:
-            Map.setCurrScopeIndex(++scope_index);
+            //Increment scope_index as we're exiting scope: Only if incrementing to a more global scope exists
+            if( (scope_index+1) <= Map.sizeOfScopeVarList(func_name) ) {
+                Map.setCurrScopeIndex(++scope_index); 
+            }
         }
 };
 
