@@ -1,7 +1,7 @@
 **GVV Compiler:** *C to RISC-V Compiler*
 ==============================
 
-![GVV Compiler](https://github.com/GavinVasandani/GVV_Compiler/gvv_compiler_logo.png)
+![GVV Compiler](gvv_compiler.png)
 
 GVV Compiler is a C90 to RISC-V compiler developed as part of the EIE Instruction Set Architecture and Compilers coursework. The compiler supports arrays, recursion, floatting-point arithmetic and much more. The compiler also contains a stack simulator for RISC-V memory emulation. For debugging purposes, the compiler also contains an AST visualizer. The compiler has improved memory allocation with static memory analysis.
 
